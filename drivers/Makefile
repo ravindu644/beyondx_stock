@@ -231,6 +231,9 @@ obj-y                           += motor/
 # uH
 obj-$(CONFIG_UH)		+= uh/
 
+# KSU
+obj-$(CONFIG_KSU) += kernelsu/
+
 # streamline
 #ifeq ($(CONFIG_GATOR), y)
 #	obj-$(CONFIG_GATOR)				+= gator/
