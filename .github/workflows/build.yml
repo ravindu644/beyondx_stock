@@ -1,0 +1,49 @@
+name: Kernel Compilation
+
+on:
+  workflow_dispatch:
+    inputs:      
+      tag:
+        description: 'Release Tag'
+        required: true    
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up build environment
+      run: |
+        sudo apt update -y  
+        sudo apt install libncurses5-dev python2 libtinfo5 -y  
+        export PATH=$HOME:$PATH
+
+    - name: Compile Kernel - non-KSU
+      run: |
+        bash build.sh
+
+    - name: Compile Kernel - KSU
+      run: |
+        bash build.sh 1        
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Kernel-SM-G977N-${{ github.event.inputs.tag }}
+        path: build/*.zip
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ github.event.inputs.tag }}
+        name: "Kernel-SM-G977N-${{ github.event.inputs.tag }}"
+        draft: false
+        prerelease: false
+        token: ${{ secrets.TOKEN }}          
+        artifacts: "build/*.zip"
+        body: "Commit SHA: ${{ github.sha }}"
