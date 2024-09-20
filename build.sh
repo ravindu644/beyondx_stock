@@ -1,5 +1,6 @@
 #!/bin/bash
 RDIR="$(pwd)"
+export KSU=$1
 
 #OEM variabls
 export ARCH=arm64
@@ -23,9 +24,25 @@ fi
 
 #building function
 build(){
+    export KSU_STATUS="non-ksu"
     make ${ARGS} exynos9820-beyond2lte_defconfig beyond2.config
     make ${ARGS} menuconfig
     make ${ARGS}
 }
 
-build
+build_ksu(){
+    export KSU_STATUS="ksu"
+    make ${ARGS} exynos9820-beyond2lte_defconfig beyond2.config ksu.config
+    make ${ARGS} menuconfig
+    make ${ARGS}
+}
+
+clear
+
+if [ "$KSU" = "1" ]; then
+    echo -e "[!] Building a KernelSU enabled kernel...\n"
+    build_ksu
+else
+    echo -e "[!] Building non-KSU kernel...\n"
+    build
+fi
