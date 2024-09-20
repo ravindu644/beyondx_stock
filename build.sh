@@ -23,7 +23,7 @@ fi
 
 #building function
 build(){
-    make ${ARGS} exynos9820-beyondxks_defconfig
+    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config
     make ${ARGS} menuconfig
     make ${ARGS}
 }
