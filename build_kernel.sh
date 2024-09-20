@@ -14,6 +14,13 @@ CLANG_TRIPLE=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/a
 CROSS_COMPILE=${RDIR}/toolchain/gcc-cfp/gcc-cfp-jopp-only/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 "
+
+#symlinking python2
+if [ ! -f "$HOME/python" ]; then
+    ln -s /usr/bin/python2.7 "$HOME/python"
+    export PATH=$HOME:$PATH
+fi 
+
 #building function
 build(){
     make ${ARGS} exynos9820-beyondxks_defconfig
