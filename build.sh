@@ -37,12 +37,21 @@ build_ksu(){
     make ${ARGS}
 }
 
+ak3(){
+    cp "${RDIR}/arch/arm64/boot/Image" "${RDIR}/AnyKernel3"
+    cd "${RDIR}/AnyKernel3"
+    zip -r "Kernel-SM-G977N-${KSU_STATUS}.zip" * ; mv "Kernel-SM-G977N-${KSU_STATUS}.zip" "${RDIR}/build"
+    echo -e "\n[i] Build Finished..!\n"
+}
+
 clear
 
 if [ "$KSU" = "1" ]; then
     echo -e "[!] Building a KernelSU enabled kernel...\n"
     build_ksu
+    ak3
 else
     echo -e "[!] Building non-KSU kernel...\n"
     build
+    ak3
 fi
