@@ -4,8 +4,8 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=ExampleKernel by osm0sis @ xda-developers
-do.devicecheck=1
+kernel.string=Modified Stock Kernel for SM-G977N by @ravindu644
+do.devicecheck=0
 do.modules=0
 do.systemless=1
 do.cleanup=1
@@ -29,7 +29,7 @@ set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
 } # end attributes
 
 # boot shell variables
-BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;
+BLOCK=/dev/block/platform/13d60000.ufs/by-name/boot;
 IS_SLOT_DEVICE=0;
 RAMDISK_COMPRESSION=auto;
 PATCH_VBMETA_FLAG=auto;
@@ -38,7 +38,8 @@ PATCH_VBMETA_FLAG=auto;
 . tools/ak3-core.sh;
 
 # boot install
-dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+#dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+split_boot
 
 # init.rc
 backup_file init.rc;
@@ -56,7 +57,8 @@ patch_fstab fstab.tuna /cache ext4 options "barrier=1" "barrier=0,nomblk_io_subm
 patch_fstab fstab.tuna /data ext4 options "data=ordered" "nomblk_io_submit,data=writeback";
 append_file fstab.tuna "usbdisk" fstab;
 
-write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+#write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+flash_boot
 ## end boot install
 
 
