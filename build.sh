@@ -1,5 +1,7 @@
 #!/bin/bash
 RDIR="$(pwd)"
+
+mkdir -p ${RDIR}/build
 export KSU=$1
 
 #OEM variabls
