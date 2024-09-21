@@ -3,6 +3,7 @@ RDIR="$(pwd)"
 
 mkdir -p ${RDIR}/build
 export KSU=$1
+export KBUILD_BUILD_USER="@ravindu644"
 
 #OEM variabls
 export ARCH=arm64
