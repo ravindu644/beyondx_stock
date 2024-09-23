@@ -22,8 +22,9 @@ CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 #symlinking python2
 if [ ! -f "$HOME/python" ]; then
     ln -s /usr/bin/python2.7 "$HOME/python"
-    export PATH=$HOME:$PATH
 fi 
+
+export PATH=$HOME:$PATH
 
 #building function
 build(){
