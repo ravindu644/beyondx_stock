@@ -20,8 +20,8 @@ jobs:
     - name: Set up build environment
       run: |
         sudo apt update -y  
-        sudo apt install libncurses5-dev python2 libtinfo5 -y  
-        export PATH=$HOME:$PATH
+        sudo apt install libncurses5-dev -y
+        wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
 
     - name: Compile Kernel - non-KSU
       run: |
