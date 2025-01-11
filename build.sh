@@ -1,6 +1,9 @@
 #!/bin/bash
 RDIR="$(pwd)"
 
+#init ksu next
+git submodule init && git submodule update
+
 mkdir -p ${RDIR}/build
 export KSU=$1
 export KBUILD_BUILD_USER="@ravindu644"
