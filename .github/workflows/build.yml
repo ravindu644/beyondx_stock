@@ -23,13 +23,9 @@ jobs:
         sudo apt install libncurses5-dev -y
         wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
 
-    - name: Compile Kernel - non-KSU
+    - name: Compile Kernel
       run: |
-        bash build.sh
-
-    - name: Compile Kernel - KSU
-      run: |
-        bash build.sh 1        
+        bash build.sh     
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
