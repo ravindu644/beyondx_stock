@@ -32,7 +32,7 @@ export PATH=$HOME:$PATH
 build_ksu(){
     make ${ARGS} exynos9820-beyond2lte_defconfig beyond2.config ksu.config
     make ${ARGS} menuconfig
-    make ${ARGS}
+    make ${ARGS} || exit 1
 }
 
 ak3(){
