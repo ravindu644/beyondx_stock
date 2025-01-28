@@ -1,8 +1,17 @@
 #!/bin/bash
 RDIR="$(pwd)"
-
-mkdir -p ${RDIR}/build
 export KBUILD_BUILD_USER="@ravindu644"
+
+#build directory
+rm -rf ${RDIR}/build && mkdir -p ${RDIR}/build
+
+#kernelversion
+if [ -z "$BUILD_KERNEL_VERSION" ]; then
+    export BUILD_KERNEL_VERSION="dev"
+fi
+
+#setting up localversion
+echo -e "CONFIG_LOCALVERSION_AUTO=n\nCONFIG_LOCALVERSION=\"-ravindu644-${BUILD_KERNEL_VERSION}\"\n" > "${RDIR}/arch/arm64/configs/version.config"
 
 #OEM variabls
 export ARCH=arm64
@@ -18,29 +27,31 @@ CROSS_COMPILE=${RDIR}/toolchain/gcc-cfp/gcc-cfp-jopp-only/aarch64-linux-android-
 CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 "
 
-#symlinking python2
-if [ ! -f "$HOME/python" ]; then
-    ln -s /usr/bin/python2.7 "$HOME/python"
-fi 
-
-export PATH=$HOME:$PATH
-
 #building function
-build_ksu(){
-    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config ksu.config > /dev/null 2>&1
-    make ${ARGS} menuconfig
+build_kernel(){
+    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config version.config
+    make ${ARGS} menuconfig || true
     make ${ARGS} || exit 1
 }
 
-ak3(){
-    cp "${RDIR}/arch/arm64/boot/Image" "${RDIR}/AnyKernel3"
-    cd "${RDIR}/AnyKernel3"
-    zip -r "Kernel-SM-G977N-ksu-next.zip" * && mv "Kernel-SM-G977N-ksu-next.zip" "${RDIR}/build"
-    echo -e "\n[i] Build Finished..!\n"
+#build boot.img
+build_boot() {    
+    rm -f ${RDIR}/AIK-Linux/split_img/boot.img-kernel ${RDIR}/AIK-Linux/boot.img
+    cp "${RDIR}/arch/arm64/boot/Image" ${RDIR}/AIK-Linux/split_img/boot.img-kernel
+    mkdir -p ${RDIR}/AIK-Linux/ramdisk
+    cd ${RDIR}/AIK-Linux && ./repackimg.sh --nosudo && mv image-new.img ${RDIR}/build/boot.img
+}
+
+#build odin flashable tar
+build_tar(){
+    cp ${RDIR}/prebuilt-images/* ${RDIR}/build && cd ${RDIR}/build
+    tar -cvf "Kernel-SM-G977N-${BUILD_KERNEL_VERSION}.tar" boot.img dt.img.lz4 dtbo.img.lz4 && rm boot.img dt.img.lz4 dtbo.img.lz4 
+    echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
 clear
 
-echo -e "[!] Building a KernelSU enabled kernel...\n"
-build_ksu
-ak3
+echo -e "[!] Building kernel...\n"
+build_kernel
+build_boot
+build_tar
