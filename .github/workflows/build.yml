@@ -22,6 +22,7 @@ jobs:
         sudo apt update -y  
         sudo apt install libncurses5-dev -y
         wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
+        echo "BUILD_KERNEL_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV  
 
     - name: Compile Kernel
       run: |
@@ -31,7 +32,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Kernel-SM-G977N-${{ github.event.inputs.tag }}
-        path: build/*.zip
+        path: build/*.tar
 
     - name: Create release
       uses: ncipollo/release-action@v1
@@ -41,5 +42,5 @@ jobs:
         draft: false
         prerelease: false
         token: ${{ secrets.TOKEN }}          
-        artifacts: "build/*.zip"
+        artifacts: "build/*.tar"
         body: "Commit SHA: ${{ github.sha }}"
