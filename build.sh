@@ -36,7 +36,7 @@ CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 
 #building function
 build_ksu(){
-    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config ksu.config version.config
+    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config ksu.config version.config nethunter.config
     make ${ARGS} menuconfig || true
     make ${ARGS} || exit 1
 }
