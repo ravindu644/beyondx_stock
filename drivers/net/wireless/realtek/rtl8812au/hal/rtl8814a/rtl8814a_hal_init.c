@@ -4833,7 +4833,7 @@ static void hw_var_set_opmode(PADAPTER Adapter, u8 variable, u8* val)
 			rtw_write8(Adapter,REG_BCN_CTRL_1, 0x11);//disable atim wnd and disable beacon function
 			//rtw_write8(Adapter,REG_BCN_CTRL_1, 0x18);
 		}
-		else if((mode == _HW_STATE_ADHOC_) /*|| (mode == _HW_STATE_AP_)*/)
+		else if(mode == _HW_STATE_ADHOC_)
 		{
 #ifdef RTL8814AE_SW_BCN
 			/*Beacon is polled to TXBUF*/
