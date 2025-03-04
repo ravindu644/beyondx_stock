@@ -41,7 +41,7 @@ jobs:
         with:
           name: "KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
           path: |
-            build/*.zip
+            build/*.tar
 
   release:
     needs: build
@@ -63,5 +63,5 @@ jobs:
           draft: false
           prerelease: false
           token: ${{ secrets.TOKEN }}          
-          artifacts: "artifacts/**/*.zip"
+          artifacts: "artifacts/**/*.tar"
           body: "Commit SHA: ${{ github.sha }}"
