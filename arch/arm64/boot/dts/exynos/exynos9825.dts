@@ -5304,7 +5304,6 @@
 
 		android {
 			compatible = "android,firmware";
-
 		};
 	};
 
