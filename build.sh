@@ -63,7 +63,7 @@ build_boot() {
 
 #build odin flashable tar
 build_tar(){
-    cp ${RDIR}/prebuilt-images/* ${RDIR}/build && cd ${RDIR}/build
+    cp "${RDIR}/prebuilt-images/dt_exynos${SOC}.img.lz4" "${RDIR}/build/dt.img.lz4" && cd ${RDIR}/build
     tar -cvf "Kernel-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
