@@ -29,7 +29,7 @@ CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 
 #building function
 build_kernel(){
-    make ${ARGS} exynos9820-beyondxks_defconfig beyondx.config version.config
+    make ${ARGS} exynos9820-beyondxks_defconfig common.config version.config
     make ${ARGS} menuconfig || true
     make ${ARGS} || exit 1
 }
