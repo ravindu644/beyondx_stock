@@ -1,46 +1,67 @@
-name: Kernel Compilation
+name: build and release
 
 on:
   workflow_dispatch:
     inputs:      
       tag:
         description: 'Release Tag'
-        required: true    
+        required: true        
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        device: [beyond2, beyond1, beyond0, beyondxks]
 
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: Set up build environment
-      run: |
-        sudo apt update -y  
-        sudo apt install libncurses5-dev -y
-        wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
-        echo "BUILD_KERNEL_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV  
+      - name: Set up build environment
+        run: |
+          sudo apt update -y  
+          sudo apt install libncurses5-dev -y
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb         
+          
+      - name: Set environment variable
+        run: |
+          echo "BUILD_KERNEL_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          
+      - name: Building Kernel
+        run: |
+            bash build.sh ${{ matrix.device }}
 
-    - name: Compile Kernel
-      run: |
-        bash build.sh     
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: "KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
+          path: |
+            build/*.tar
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kernel-SM-G977N-${{ github.event.inputs.tag }}
-        path: build/*.tar
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-    - name: Create release
-      uses: ncipollo/release-action@v1
-      with:
-        tag: ${{ github.event.inputs.tag }}
-        name: "Kernel-SM-G977N-${{ github.event.inputs.tag }}"
-        draft: false
-        prerelease: false
-        token: ${{ secrets.TOKEN }}          
-        artifacts: "build/*.tar"
-        body: "Commit SHA: ${{ github.sha }}"
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.event.inputs.tag }}
+          name: "KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
+          draft: false
+          prerelease: false
+          token: ${{ secrets.TOKEN }}          
+          artifacts: "artifacts/**/*.tar"
+          body: "Commit SHA: ${{ github.sha }}"
