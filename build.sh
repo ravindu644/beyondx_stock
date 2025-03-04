@@ -15,21 +15,21 @@ fi
 
 # Device configuration
 declare -A DEVICES=(
-    [beyond2]="exynos9820-beyond2_defconfig 9820 SRPRI17C014KU"
-    [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU"
-    [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU"
-    [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU"
-    [d1]="exynos9825-d1_defconfig 9825 SRPSD26B009KU"
+    [beyond2]="exynos9820-beyond2_defconfig 9820 SRPRI17C014KU S"
+    [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU S"
+    [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU S"
+    [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU S"
+    [d1]="exynos9825-d1_defconfig 9825 SRPSD26B009KU N"
 )
 
 # Set device-specific variables
 if [[ -v DEVICES[$MODEL] ]]; then
-    read KERNEL_DEFCONFIG SOC BOARD <<< "${DEVICES[$MODEL]}"
+    read KERNEL_DEFCONFIG SOC BOARD PHONE <<< "${DEVICES[$MODEL]}"
     echo -e "[!] Building a KernelSU enabled kernel for ${MODEL}...\n"
 else
     echo "Unknown device: $MODEL, setting to beyondxks"
     export MODEL="beyondxks"
-    read KERNEL_DEFCONFIG SOC BOARD <<< "${DEVICES[beyondxks]}"
+    read KERNEL_DEFCONFIG SOC BOARD PHONE <<< "${DEVICES[beyondxks]}"
 fi
 
 #kernelversion
@@ -53,6 +53,18 @@ CLANG_TRIPLE=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/a
 CROSS_COMPILE=${RDIR}/toolchain/gcc-cfp/gcc-cfp-jopp-only/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
 "
+# tzdev
+rm -rf "${RDIR}/drivers/misc/tzdev"
+
+if [ "$PHONE" = "S" ]; then
+    echo "Using S tzdev driver"
+    cp -ar "${RDIR}/prebuilt-images/S/tzdev" "${RDIR}/drivers/misc/tzdev"
+
+elif [ "$PHONE" = "N" ]; then
+    echo "Using N tzdev driver"
+    cp -ar "${RDIR}/prebuilt-images/N/tzdev" "${RDIR}/drivers/misc/tzdev"
+
+fi
 
 #building function
 build_ksu(){
