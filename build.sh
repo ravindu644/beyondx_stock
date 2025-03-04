@@ -76,8 +76,6 @@ build_tar(){
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
-clear
-
 echo -e "[!] Building a KernelSU enabled kernel...\n"
 build_ksu
 build_boot
