@@ -1,7 +1,7 @@
 /dts-v1/;
 
 / {
-	compatible = "samsung,armv8", "samsung,exynos9820";
+	compatible = "samsung,armv8", "samsung,exynos9825";
 	dtb-hw_rev = <0x0>;
 	dtb-hw_rev_end = <0xff>;
 	interrupt-parent = <0x1>;
