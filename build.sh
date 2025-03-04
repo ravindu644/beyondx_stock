@@ -25,6 +25,7 @@ declare -A DEVICES=(
 # Set device-specific variables
 if [[ -v DEVICES[$MODEL] ]]; then
     read KERNEL_DEFCONFIG SOC BOARD <<< "${DEVICES[$MODEL]}"
+    echo -e "[!] Building a KernelSU enabled kernel for ${MODEL}...\n"
 else
     echo "Unknown device: $MODEL, setting to beyondxks"
     export MODEL="beyondxks"
@@ -76,7 +77,6 @@ build_tar(){
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
-echo -e "[!] Building a KernelSU enabled kernel...\n"
 build_ksu
 build_boot
 build_tar
