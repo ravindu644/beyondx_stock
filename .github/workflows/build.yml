@@ -39,7 +39,7 @@ jobs:
       - name: Upload kernel
         uses: actions/upload-artifact@v4
         with:
-          name: "KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
+          name: "Nethunter-KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
           path: |
             build/*.tar
 
@@ -59,7 +59,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.event.inputs.tag }}
-          name: "KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
+          name: "Nethunter-KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
           draft: false
           prerelease: false
           token: ${{ secrets.TOKEN }}          
