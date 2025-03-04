@@ -18,6 +18,7 @@ declare -A DEVICES=(
 # Set device-specific variables
 if [[ -v DEVICES[$MODEL] ]]; then
     read KERNEL_DEFCONFIG SOC BOARD <<< "${DEVICES[$MODEL]}"
+    echo -e "[!] Building a KernelSU enabled kernel for ${MODEL}...\n"
 else
     echo "Unknown device: $MODEL, setting to beyondxks"
     export MODEL="beyondxks"
@@ -68,8 +69,6 @@ build_tar(){
     tar -cvf "Kernel-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
-
-clear
 
 echo -e "[!] Building kernel...\n"
 build_kernel
