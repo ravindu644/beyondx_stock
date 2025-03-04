@@ -45,7 +45,7 @@ build_boot() {
 #build odin flashable tar
 build_tar(){
     cp ${RDIR}/prebuilt-images/* ${RDIR}/build && cd ${RDIR}/build
-    tar -cvf "Kernel-SM-G977N-${BUILD_KERNEL_VERSION}.tar" boot.img dt.img.lz4 dtbo.img.lz4 && rm boot.img dt.img.lz4 dtbo.img.lz4 
+    tar -cvf "Kernel-SM-G977N-${BUILD_KERNEL_VERSION}.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
