@@ -14,7 +14,7 @@ jobs:
       contents: write
     strategy:
       matrix:
-        device: [beyond2, beyond1, beyond0, beyondxks, d1]
+        device: [beyond2, beyond1, beyond0, beyondxks, d1, d2s]
 
     steps:
       - name: Checkout source
