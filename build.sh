@@ -19,6 +19,7 @@ declare -A DEVICES=(
     [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU"
     [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU"
     [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU"
+    [d1]="exynos9825-d1_defconfig 9825 SRPSD26B009KU"
 )
 
 # Set device-specific variables
