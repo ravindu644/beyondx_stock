@@ -80,6 +80,44 @@ dtbo-y += samsung/exynos9820-beyond2lte_kor_19.dtbo
 dtbo-y += samsung/exynos9820-beyond2lte_kor_17.dtbo
 dtbo-y += samsung/exynos9820-beyond2lte_kor_25.dtbo
 
+#d1
+dtbo-y += samsung/exynos9825-d1_eur_open_18.dtbo
+dtbo-y += samsung/exynos9825-d1_eur_open_19.dtbo
+dtbo-y += samsung/exynos9825-d1_eur_open_21.dtbo
+dtbo-y += samsung/exynos9825-d1_eur_open_22.dtbo
+dtbo-y += samsung/exynos9825-d1_eur_open_23.dtbo
+
+#d1x
+dtbo-y += samsung/exynos9825-d1x_kor_single_18.dtbo
+dtbo-y += samsung/exynos9825-d1x_kor_single_19.dtbo
+dtbo-y += samsung/exynos9825-d1x_kor_single_21.dtbo
+dtbo-y += samsung/exynos9825-d1x_kor_single_22.dtbo
+dtbo-y += samsung/exynos9825-d1x_kor_single_23.dtbo
+
+#d2
+dtbo-y += samsung/exynos9825-d2_eur_open_02.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_16.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_17.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_18.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_19.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_20.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_21.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_22.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_23.dtbo
+dtbo-y += samsung/exynos9825-d2_eur_open_24.dtbo
+
+#d2x
+dtbo-y += samsung/exynos9825-d2x_eur_open_02.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_16.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_17.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_18.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_19.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_20.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_21.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_22.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_23.dtbo
+dtbo-y += samsung/exynos9825-d2x_eur_open_24.dtbo
+
 targets += dtbs
 DTB_LIST  := $(dtb-y) $(dtbo-y)
 always    := $(DTB_LIST)
