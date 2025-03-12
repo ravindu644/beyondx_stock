@@ -129,3 +129,6 @@ kernel/configs/android-*.cfg
 #patch
 *.orig
 *.rej
+
+libtinfo5_6.3-2ubuntu0.1_amd64.deb
+*.deb
