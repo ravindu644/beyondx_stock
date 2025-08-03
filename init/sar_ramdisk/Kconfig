@@ -11,7 +11,7 @@ if ANDROID_SAR_RAMDISK
 
 config ANDROID_BOOT_PARTITION
 	string "Android boot partition"
-	default "/dev/block/sda14"
+	default "/dev/sda14"
 
 endif
 
