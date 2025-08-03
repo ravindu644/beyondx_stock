@@ -19,8 +19,6 @@ declare -A DEVICES=(
     [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU S"
     [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU S"
     [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU S"
-    [d1]="exynos9825-d1_defconfig 9825 SRPSD26B009KU N"
-    [d2s]="exynos9825-d2s_defconfig 9825 SRPSC14B009KU N"
 )
 
 # Set device-specific variables
@@ -83,13 +81,19 @@ build_boot() {
     cd ${RDIR}/AIK-Linux && ./repackimg.sh --nosudo && mv image-new.img ${RDIR}/build/boot.img
 }
 
+#build dtb.img
+build_dtb() {
+    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dt.img" "${RDIR}/bin/${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
+
+}
+
 #build odin flashable tar
 build_tar(){
-    cp "${RDIR}/prebuilt-images/dt_exynos${SOC}.img.lz4" "${RDIR}/build/dt.img.lz4" && cd ${RDIR}/build
-    tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
+    tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img && rm boot.img dt.img
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
 build_ksu
 build_boot
+build_dtb
 build_tar
