@@ -79,10 +79,12 @@ build_boot() {
     echo $BOARD > ${RDIR}/AIK-Linux/split_img/boot.img-board
     mkdir -p ${RDIR}/AIK-Linux/ramdisk
 
-    cd "${RDIR}/AIK-Linux" && \
+    cd "${RDIR}/AIK-Linux/ramdisk" && \
         if [ ! -d "debug_ramdisk" ]; then \
             mkdir -p debug_ramdisk dev metadata mnt proc second_stage_resources sys; \
         fi
+
+        cd ${RDIR}/AIK-Linux/
 
         ./repackimg.sh --nosudo && \
         mv image-new.img "${RDIR}/build/boot.img"
