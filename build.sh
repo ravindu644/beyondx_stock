@@ -108,13 +108,20 @@ build_boot() {
     cd ${RDIR}/AIK-Linux && ./repackimg.sh --nosudo && mv image-new.img ${RDIR}/build/boot.img
 }
 
+#build dtb.img
+build_dtb() {
+    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dt.img" "${RDIR}/bin/exynos${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
+
+}
+
 #build odin flashable tar
 build_tar(){
-    cp "${RDIR}/prebuilt-images/dt_exynos${SOC}.img.lz4" "${RDIR}/build/dt.img.lz4" && cd ${RDIR}/build
-    tar -cvf "KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
+    cd ${RDIR}/build
+    tar -cvf "KernelSU-Next-UI5.1-${MODEL}-${BUILD_KERNEL_VERSION}.tar" boot.img dt.img && rm boot.img dt.img
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
 build_ksu
 build_boot
+build_dtb
 build_tar
