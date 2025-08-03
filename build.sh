@@ -82,7 +82,8 @@ build_boot() {
     cd "${RDIR}/AIK-Linux" && \
         if [ ! -d "debug_ramdisk" ]; then \
             mkdir -p debug_ramdisk dev metadata mnt proc second_stage_resources sys; \
-        fi && \
+        fi
+
         ./repackimg.sh --nosudo && \
         mv image-new.img "${RDIR}/build/boot.img"
    
@@ -90,12 +91,13 @@ build_boot() {
 
 #build dtb.img
 build_dtb() {
-    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dt.img" "${RDIR}/bin/${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
+    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dt.img" "${RDIR}/bin/exynos${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
 
 }
 
 #build odin flashable tar
 build_tar(){
+    cd ${RDIR}/build
     tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img && rm boot.img dt.img
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
