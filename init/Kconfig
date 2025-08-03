@@ -2042,5 +2042,4 @@ config ASN1
 	  functions to call on what tags.
 
 source "kernel/Kconfig.locks"
-
-
+source "init/sar_ramdisk/Kconfig"
