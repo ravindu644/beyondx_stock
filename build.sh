@@ -1,6 +1,7 @@
 #!/bin/bash
 RDIR="$(pwd)"
 export KBUILD_BUILD_USER="@ravindu644"
+export RUSER="$(whoami)"
 export MODEL=$1
 
 #init ksu next
@@ -81,13 +82,16 @@ build_boot() {
 
     cd "${RDIR}/AIK-Linux/ramdisk" && \
         if [ ! -d "debug_ramdisk" ]; then \
-            mkdir -p debug_ramdisk dev metadata mnt proc second_stage_resources sys; \
+            mkdir -p debug_ramdisk dev metadata mnt overlay.d overlay.d/rc.d proc second_stage_resources sys; \
         fi
 
         cd ${RDIR}/AIK-Linux/
 
-        ./repackimg.sh --nosudo && \
+        sudo ./restore_metadata.sh
+        sudo ./repackimg.sh && \
         mv image-new.img "${RDIR}/build/boot.img"
+
+        sudo chown -R $RUSER:$RUSER "${RDIR}/AIK-Linux/ramdisk"
    
 }
 
@@ -100,7 +104,7 @@ build_dtb() {
 #build odin flashable tar
 build_tar(){
     cd ${RDIR}/build
-    tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img && rm boot.img dt.img
+    tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img && sudo rm boot.img dt.img
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
