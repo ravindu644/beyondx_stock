@@ -1,0 +1,5 @@
+# Start ADB at boot
+
+on post-fs-data
+    setprop ravindu.ravindu644.kernel "Hello Nethunter !"
+    setprop sys.usb.config adb
