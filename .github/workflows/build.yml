@@ -1,67 +1,81 @@
-name: build and release
+name: Build and Release
 
 on:
   workflow_dispatch:
-    inputs:      
+    inputs:
       tag:
-        description: 'Release Tag'
-        required: true        
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    env:
+      BUILD_KERNEL_VERSION: ${{ github.event.inputs.tag }}
     permissions:
       contents: write
-    strategy:
-      matrix:
-        device: [beyond2, beyond1, beyond0, beyondxks]
 
     steps:
-      - name: Checkout source
+      - name: Checkout Source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Set up build environment
+      - name: Set Up Build Environment
         run: |
-          sudo apt update -y  
-          sudo apt install libncurses5-dev -y
-          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb && sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb         
-          
-      - name: Set environment variable
-        run: |
-          echo "BUILD_KERNEL_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
-          
-      - name: Building Kernel
-        run: |
-            bash build.sh ${{ matrix.device }}
+          sudo apt update
+          sudo apt install -y libncurses5-dev libtinfo5
 
-      - name: Upload kernel
+      - name: Build Kernel
+        run: |
+          bash matrix_build.sh
+
+      - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: "Nethunter-KernelSU-Next-${{ env.BUILD_KERNEL_VERSION }}-${{ matrix.device }}-stock-One-UI"
-          path: |
-            build/*.tar
+          name: "NH-Kernel-Exy9820-OneUI4.1-${{ env.BUILD_KERNEL_VERSION }}"
+          path: build/*.zip
 
   release:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      BUILD_KERNEL_VERSION: ${{ github.event.inputs.tag }}
     permissions:
       contents: write
 
     steps:
-      - name: Download all artifacts
+      - name: Download Built Artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Create release
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.event.inputs.tag }}
-          name: "Nethunter-KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
+          name: "NH-Kernel-Exy9820-OneUI4.1-${{ env.BUILD_KERNEL_VERSION }}"
+          body: |
+              ## NetHunter Kernel for Exynos9820 (OneUI 4.1)
+
+              **Supported Devices:**  
+              - Galaxy S10e (beyond0)  
+              - Galaxy S10 (beyond1)  
+              - Galaxy S10+ (beyond2)  
+              - Galaxy S10 5G (beyondx)
+
+              **Kernel Features:**  
+              - Pre-rooted with KernelSU-Next
+              - Built from commit `${{ github.sha }}`  
+              - Early init injects `init.exynos9820.usb.rc` to enable full USB Arsenal capabilities  
+              - Custom-built NetHunter app, specially optimized for Exynos9820 (USB Arsenal works only with this version!)  
+              - All other NetHunter functions supported (Packet Injection, Monitor mode, WPS etc.)
+
+              ---
+              Built by: [@ravindu644](https://github.com/ravindu644)  
+              Follow the [GitHub project](https://github.com/${{ github.repository }}) for updates.
+
           draft: false
           prerelease: false
-          token: ${{ secrets.TOKEN }}          
-          artifacts: "artifacts/**/*.tar"
-          body: "Commit SHA: ${{ github.sha }}"
+          token: ${{ secrets.TOKEN }}
+          artifacts: artifacts/**/*.zip
