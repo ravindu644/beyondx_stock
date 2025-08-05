@@ -1,5 +1,6 @@
 #!/bin/bash
-RDIR="$(pwd)"
+export RDIR="$(pwd)"
+export MODULE_DIR="${RDIR}/nethunter-exynos9820/exynos9820/module"
 export KBUILD_BUILD_USER="@ravindu644"
 export RUSER="$(whoami)"
 export MODEL=$1
@@ -15,7 +16,7 @@ declare -A DEVICES=(
     [beyond2]="exynos9820-beyond2_defconfig 9820 SRPRI17C014KU S"
     [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU S"
     [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU S"
-    [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU S"
+    [beyondx]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU S"
 )
 
 # Set device-specific variables
@@ -23,14 +24,9 @@ if [[ -v DEVICES[$MODEL] ]]; then
     read KERNEL_DEFCONFIG SOC BOARD PHONE <<< "${DEVICES[$MODEL]}"
     echo -e "[!] Building a KernelSU enabled kernel for ${MODEL}...\n"
 else
-    echo "Unknown device: $MODEL, setting to beyondxks"
-    export MODEL="beyondxks"
-    read KERNEL_DEFCONFIG SOC BOARD PHONE <<< "${DEVICES[beyondxks]}"
-fi
-
-#kernelversion
-if [ -z "$BUILD_KERNEL_VERSION" ]; then
-    export BUILD_KERNEL_VERSION="dev"
+    echo "Unknown device: $MODEL, setting to beyondx"
+    export MODEL="beyondx"
+    read KERNEL_DEFCONFIG SOC BOARD PHONE <<< "${DEVICES[beyondx]}"
 fi
 
 #setting up localversion
@@ -89,7 +85,7 @@ build_boot() {
 
         sudo ./restore_metadata.sh
         sudo ./repackimg.sh && \
-        mv image-new.img "${RDIR}/build/boot.img"
+        mv -f image-new.img "${RDIR}/build/boot.img"
 
         sudo chown -R $RUSER:$RUSER "${RDIR}/AIK-Linux/ramdisk"
    
@@ -97,18 +93,23 @@ build_boot() {
 
 #build dtb.img
 build_dtb() {
-    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dt.img" "${RDIR}/bin/exynos${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
+    ${RDIR}/bin/mkdtimg cfg_create "${RDIR}/build/dtb.img" "${RDIR}/bin/exynos${SOC}.cfg" -d "${RDIR}/arch/arm64/boot/dts/exynos"
 
 }
 
-#build odin flashable tar
-build_tar(){
-    cd ${RDIR}/build
-    tar -cvf "Nethunter-KernelSU-Next-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img && sudo rm boot.img dt.img
-    echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
+#Copy *.imgs to magisk module's kernel directory
+copy_to_magisk_module(){
+    cd "${RDIR}/build/"
+
+    set -x
+    mv -f *.img ${MODULE_DIR}/kernel/${MODEL} || exit 1
+
+    set +x
+
+    echo -e "\n[i] Copying Finished to magisk module directory for devide $MODEL..!\n" && cd ${RDIR}
 }
 
 build_ksu
 build_boot
 build_dtb
-build_tar
+copy_to_magisk_module
