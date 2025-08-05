@@ -71,6 +71,9 @@ jobs:
               - Custom-built NetHunter app, specially optimized for Exynos9820 (USB Arsenal works only with this version!)  
               - All other NetHunter functions supported (Packet Injection, Monitor mode, WPS etc.)
 
+              **How to install ?**
+              - Flash with Magisk/KSU/APatch manager and **not using a custom recovery.**
+
               ---
               Built by: [@ravindu644](https://github.com/ravindu644)  
               Follow the [GitHub project](https://github.com/${{ github.repository }}) for updates.
