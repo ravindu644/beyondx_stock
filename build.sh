@@ -8,11 +8,7 @@ export MODEL=$1
 git submodule init && git submodule update
 
 #build dir
-if [ ! -d "${RDIR}/build" ]; then
-    mkdir -p "${RDIR}/build"
-else
-    rm -rf "${RDIR}/build" && mkdir -p "${RDIR}/build"
-fi
+mkdir -p "${RDIR}/build"
 
 # Device configuration
 declare -A DEVICES=(
@@ -69,7 +65,11 @@ fi
 #building function
 build_ksu(){
     make ${ARGS} "${KERNEL_DEFCONFIG}" common.config ksu.config version.config nethunter.config
-    make ${ARGS} menuconfig || true
+
+    if [ ! "$MAKE_MENUCONFIG" = "0" ]; then
+        make ${ARGS} menuconfig || true
+    fi
+
     make ${ARGS} || exit 1
 }
 

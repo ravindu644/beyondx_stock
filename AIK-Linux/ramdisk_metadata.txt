@@ -7,6 +7,7 @@
 0 0 755 ramdisk/mnt
 0 0 750 ramdisk/overlay.d
 0 0 750 ramdisk/overlay.d/sbin
+0 0 644 ramdisk/overlay.d/sbin/init-ld.xz
 0 2000 755 ramdisk/overlay.d/vendor
 0 2000 755 ramdisk/overlay.d/vendor/etc
 0 2000 755 ramdisk/overlay.d/vendor/etc/init
