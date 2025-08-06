@@ -276,6 +276,7 @@ static int hci_init1_req(struct hci_request *req, unsigned long opt)
 
 static void bredr_setup(struct hci_request *req)
 {
+	struct hci_dev *hdev = req->hdev;
 	__le16 param;
 	__u8 flt_type;
 
@@ -298,8 +299,10 @@ static void bredr_setup(struct hci_request *req)
 	hci_req_add(req, HCI_OP_READ_CURRENT_IAC_LAP, 0, NULL);
 
 	/* Clear Event Filters */
-	flt_type = HCI_FLT_CLEAR_ALL;
-	hci_req_add(req, HCI_OP_SET_EVENT_FLT, 1, &flt_type);
+	if (!test_bit(HCI_QUIRK_BROKEN_SET_EVENT_FILTER, &hdev->quirks)) {
+		flt_type = HCI_FLT_CLEAR_ALL;
+		hci_req_add(req, HCI_OP_SET_EVENT_FLT, 1, &flt_type);
+	}
 
 	/* Connection accept timeout ~20 secs */
 	param = cpu_to_le16(0x7d00);
