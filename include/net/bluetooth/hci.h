@@ -193,7 +193,13 @@ enum {
 	 * This quirk can be set before hci_register_dev is called or
 	 * during the hdev->setup vendor callback.
 	 */
-	HCI_QUIRK_BROKEN_ERR_DATA_REPORTING,	
+	HCI_QUIRK_BROKEN_ERR_DATA_REPORTING,
+
+	/* When this quirk is set, then sending Set Event Filter command
+	 * is skipped. Some broken controllers return an error for this
+	 * command which aborts the initialization sequence.
+	 */
+	HCI_QUIRK_BROKEN_SET_EVENT_FILTER,	
 };
 
 /* HCI device flags */
