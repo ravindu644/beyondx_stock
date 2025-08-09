@@ -53,7 +53,7 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.event.inputs.tag }}
+          tag: nh-${{ github.event.inputs.tag }}
           name: "NH-Kernel-Exy9820-OneUI4.1-${{ env.BUILD_KERNEL_VERSION }}"
           body: |
               ## NetHunter Kernel for Exynos9820 (OneUI 4.1)
