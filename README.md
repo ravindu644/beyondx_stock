@@ -140,7 +140,7 @@ The author is **not responsible** for any misuse, damage, or legal consequences 
     - Zip it again and flash it via KSU Manager → reboot the phone once.
     - Then, don't do anything, and follow step `02` below.
 
-02. Download the `Module.zip` from the GitHub releases.  
+02. Download the `Module.zip` from my [GitHub releases](https://github.com/ravindu644/samsung_exynos9820_stock/releases).  
 03. Install it via KSU Manager, copy the created `BootBackup` to your PC, and reboot the phone.
 
     - This process will uninstall the original NetHunter APK and replace it with our custom one.
