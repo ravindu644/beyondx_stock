@@ -35,15 +35,15 @@ The author is **not responsible** for any misuse, damage, or legal consequences 
 
 ## Quick Links
 
-1. [🟠 Features](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-features)
+1. 🟠 [Features](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-features)
 
     - [Kernel](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#01-kernel)
     - [Custom NetHunter APK](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#02-custom-nethunter-apk)
     - [Magisk / KSU / AP Module](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#03-magisk--ksu--ap-module)
 
-2. [🟢 Installation](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-installation)
-3. [🔴 Uninstallation](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-uninstallation)
-4. [⚙️ Behind the Scenes](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#%EF%B8%8F-behind-the-scenes)
+2. 🟢 [Installation](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-installation)
+3. 🔴 [Uninstallation](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#-uninstallation)
+4. ⚙️ [Behind the Scenes](https://github.com/ravindu644/samsung_exynos9820_stock/tree/readme?tab=readme-ov-file#%EF%B8%8F-behind-the-scenes)
 
 ---
 
