@@ -12,7 +12,6 @@ dtbo-y += samsung/exynos9820-beyond2lte_eur_open_23.dtbo
 dtbo-y += samsung/exynos9820-beyond2lte_eur_open_19.dtbo
 dtbo-y += samsung/exynos9820-beyond2lte_eur_open_24.dtbo
 dtb-y += exynos/exynos9820.dtb
-dtb-y += exynos/exynos9825.dtb
 
 #S10e
 dtbo-y += samsung/exynos9820-beyond0lte_eur_open_17.dtbo
