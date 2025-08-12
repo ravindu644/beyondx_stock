@@ -1,7 +1,7 @@
 id=nethunter
-name=Kali NetHunter
+name=Kali NetHunter for Exy9820
 version=1.4.0
 versionCode=14000
-author=Kali NetHunter Team @ GitLab && hlprx49
+author=Kali NetHunter Team @ GitLab && ravindu644
 description=Kali NetHunter's apps, chroot, firmwares, wallpaper.
 template=1510
