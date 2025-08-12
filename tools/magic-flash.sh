@@ -1,5 +1,5 @@
 #!/system/bin/sh
-## [Magisk] [nethunter] [This is standalone script, not sourced]
+## [KernelSU] [nethunter]
 ## Flash without custom recoveries
 ##
 ## CREDITS to HuskyDG
@@ -52,16 +52,12 @@ make_chroot() {
     echo "NOSYSTEM: Ignored mount system partition!"
   fi
 
-  ## Access to magisk bin
-  MAGISKTMP="$(magisk --path)"
-  if [ ! -z "$MAGISKTMP" ]; then
-    touch "$NEWROOT/sbin"/{magisk,magiskpolicy}
-    mount --bind "$MAGISKTMP/magisk" "$NEWROOT/sbin/magisk"
-    mount --bind "$MAGISKTMP/magiskpolicy" "$NEWROOT/sbin/magiskpolicy"
-    ln -s "./magisk" "$NEWROOT/sbin/su"
-    ln -s "./magisk" "$NEWROOT/sbin/resetprop"
-    ln -s "./magisk" "$NEWROOT/sbin/magiskhide"
-    ln -s "./magiskpolicy" "$NEWROOT/sbin/supolicy"
+  ## Access to KernelSU bin
+  KSU_TMP="/data/adb/ksu/bin"  
+if [ -d "$KSU_TMP" ]; then  
+    mount --bind "$KSU_TMP/ksud" "$NEWROOT/sbin/su"  
+    mount --bind "$KSU_TMP/resetprop" "$NEWROOT/sbin/resetprop"  
+    mount --bind "$KSU_TMP/magiskpolicy" "$NEWROOT/sbin/magiskpolicy"
   fi
 
   sysroot_major_minor="$(mountpoint -d /)"

@@ -1,7 +1,7 @@
-## [Magisk & recovery/TWRP] [nethunter] [This is sourced, not a standalone script]
+## [KernelSU & recovery/TWRP] [nethunter] [This is sourced, not a standalone script]
 ## Install Kali chroot/rootfs
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 do_umount() {
   f_is_mntpoint
   res=$?
@@ -21,7 +21,7 @@ do_umount() {
   return $isAllunmounted
 }
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 f_is_mntpoint() {
   if [ -d "$PRECHROOT" ]; then
     mountpoint -q "$PRECHROOT" && return 0
@@ -29,7 +29,7 @@ f_is_mntpoint() {
   fi
 }
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 f_dir_umount() {
   sync
 
@@ -53,7 +53,7 @@ f_dir_umount() {
   fi
 }
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 f_kill_pids() {
   local lsof_full=$(lsof | awk '{print $1}' | grep -c '^lsof')
 
@@ -71,7 +71,7 @@ f_kill_pids() {
   return 0
 }
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 f_umount_fs() {
   isAllunmounted=0
 
@@ -94,7 +94,7 @@ f_umount_fs() {
   fi
 }
 
-## Magisk support via do_umount()
+## KernelSU support via do_umount()
 f_restore_setup() {
   ## Set shmmax to 128mb to free memory
   sysctl -w kernel.shmmax=134217728 1>&2
@@ -134,7 +134,7 @@ do_install() {
   [ -d "$PRECHROOT" ] && {
     print "  - Previous chroot detected"
     if $BOOTMODE; then
-      do_umount # Magisk support
+      do_umount # KernelSU support
       [ $? == 1 ] && {
         print "  ! Error: Aborting chroot install"
         print "  - Remove the previous chroot and install the new chroot via NetHunter app"

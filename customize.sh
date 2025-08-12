@@ -1,4 +1,4 @@
-## $ adb push *nethunter*.zip /sdcard/Download/nh.zip; adb shell 'su -c magisk --install-module /sdcard/Download/nh.zip'
+##
 
 TMPDIR=/dev/tmp
 mkdir -p $TMPDIR

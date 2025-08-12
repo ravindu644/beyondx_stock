@@ -1,4 +1,4 @@
-## [Magisk & recovery/TWRP] [nethunter] [This is sourced, not a standalone script]
+## [KernelSU & recovery/TWRP] [nethunter] [This is sourced, not a standalone script]
 ## Set the wallpaper based on device screen resolution
 
 [ -d "$TMP/wallpaper" ] || return 1

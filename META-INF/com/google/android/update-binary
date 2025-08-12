@@ -2,7 +2,7 @@
 ## Kali NetHunter installer
 ##
 ## Detect bootmode
-##   BOOTMODE=true  = Device has booted into system (NetHunter installed as Magisk module)
+##   BOOTMODE=true  = Device has booted into system (NetHunter installed as KernelSU module)
 ##   BOOTMODE=false = Device has booted into recovery (NetHunter installed through TWRP)
 ##
 ## Apps
@@ -27,7 +27,7 @@
 
 #------------------------------------------------------------------------------
 
-# Magisk - echo     (really, any output on stdout, not stderr)
+# KernelSU - echo     (really, any output on stdout, not stderr)
 # TWRP   - ui_print (If not prefix with ui_print, will not work - multilines may not work)
 print() {
   if $BOOTMODE; then
@@ -99,18 +99,16 @@ print "#                                              #"
 print "###  ############# NetHunter ###################"
 print ""
 if $BOOTMODE; then
-print "* NetHunter (Magisk)"        # Skipping indent formatting
+print "* NetHunter (KernelSU)"        # Skipping indent formatting
 else
 print "* NetHunter (Recovery/TWRP)" # Skipping indent formatting
 fi
 debug "Debug Mode: Enabled"
 print ""
 
-mount /data || true # May fail, if we don't have /etc/fstab
-
 if $BOOTMODE; then
   #####################################################
-  ## Install in Magisk                               ##
+  ## Install in KernelSU                               ##
   ##   ./scripts/util_functions.sh: install_module() ##
   #####################################################
   set_perm() {
@@ -131,26 +129,12 @@ if $BOOTMODE; then
     done
   }
 
-  require_new_magisk() {
-    echo "*******************************"
-    echo " Please install Magisk v20.4+! "
-    echo "*******************************"
-    exit 1
-  }
-
-  ## REF: ./scripts/module_installer.sh
-  [ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
-  source /data/adb/magisk/util_functions.sh || print "! Issue with util_functions.sh"
-  [ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk
-
-  umask 022
-
   ## Make setup_flashable() happy
-  OUTFD=${OUTFD:- $2} # May already be defined ($ adb shell 'su -c magisk --install-module [...]')
+  OUTFD=${OUTFD:- $2} # May already be defined 
 
   print "* Unpacking script"
   extract_file "$ZIPFILE" META-INF/com/google/android/update-magisk $TMP
-  #print "* Script unpacked"
+  print "* Script unpacked"
 
   ## Default permissions
   set_perm_recursive $TMP 0 0 0755 0644
@@ -163,7 +147,7 @@ else
   ## Unpack the ZIP (everything but "kalifs-*")
   print "* Unpacking ZIP"
   extract "$ZIPFILE" "$TMP" "kalifs-*"
-  #print "* ZIP unpacked"
+  print "* ZIP unpacked"
 
   [ -f $TMP/META-INF/com/google/android/update-recovery ] && source $TMP/META-INF/com/google/android/update-recovery   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
 fi

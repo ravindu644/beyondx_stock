@@ -1,4 +1,4 @@
-## [Magisk & recovery/TWRP] [boot-patcher & nethunter] [This is sourced, not a standalone script]
+## [KernelSU & recovery/TWRP] [boot-patcher & nethunter] [This is sourced, not a standalone script]
 ## Install NetHunter's BusyBox
 ##
 ## REF: ./nethunter/META-INF/com/google/android/update-recovery:get_bb() & $MAGISKBB
@@ -11,9 +11,6 @@ ls $TMP/tools/busybox_nh-* 1>/dev/null 2>&1 || {
 }
 
 if $BOOTIMAGE; then
-  ## util_functions.sh to get grep_prop() working
-  ##   boot-patcher doesn't (yet?) support Magisk, but Magisk's file should be there due to nethunter pre-extracting/setting up
-  source /data/adb/magisk/util_functions.sh || print "  ! Issue with util_functions.sh"
 
   [ -z $TMPDIR ] && TMPDIR=/dev/tmp
 
@@ -84,7 +81,7 @@ if ! [ $BOOTMODE ]; then
   cd - >/dev/null
 fi
 
-## Magisk, not recovery/TWRP
+## KernelSU, not recovery/TWRP
 set_perm_recursive >/dev/null 2>&1 && {
   set_perm_recursive "$XBIN" 0 0 0755 0755
 }

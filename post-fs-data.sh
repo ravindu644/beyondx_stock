@@ -1,4 +1,4 @@
-## [Magisk] [nethunter] [This is standalone script, not sourced]
+## [KernelSU] [nethunter] [This is standalone script, not sourced]
 ##
 ## REF: ./nethunter/META-INF/com/google/android/update-recovery:get_bb() & $MAGISKBB
 ##      ./nethunter/post-fs-data.sh

@@ -1,11 +1,8 @@
-## [Magisk] [nethunter] [This is sourced, not a standalone script]
-## Kali NetHunter installation script for Magisk
+## [KernelSU] [nethunter]
+## Kali NetHunter installation script for  KernelSU
 ##
-## REF: https://topjohnwu.github.io/Magisk/guides.html
-##      https://github.com/topjohnwu/Magisk/blob/master/scripts/update_binary.sh
-##      https://github.com/topjohnwu/Magisk/blob/master/scripts/util_functions.sh
 ##
-## Troubleshoot: Save log via Magisk && $ adb shell 'cat /sdcard/Download/magisk_install_log_*.log; rm /sdcard/Download/magisk_install_log_*.log'
+##
 
 symlink() {
   ln -sf "$1" "$2" 2>/dev/null
@@ -101,22 +98,14 @@ mkdir -p $MODPATH || abort "! Unable to: mkdir -p $MODPATH"
 DIR=$(dirname "$ZIPFILE")
 TMP=$TMPDIR/$MODID
 
-## Magisk manager/booted flashing support
+## KernelSU manager flashing support
 OUTFD=/proc/self/fd/0
-[ -e /data/adb/magisk ] && ADB=adb
-if [ -e /data/$ADB/magisk ]; then
-  [ -e /magisk/.core/busybox ] && MAGISKBB=/magisk/.core/busybox
-  [ -e /sbin/.core/busybox ] && MAGISKBB=/sbin/.core/busybox
-  [ -e /sbin/.magisk/busybox ] && MAGISKBB=/sbin/.magisk/busybox
-  [ -e /dev/*/.magisk/busybox ] && MAGISKBB=$(echo /dev/*/.magisk/busybox)
-  [ -e /data/$ADB/ksu/bin/busybox ] && MAGISKBB=/data/$ADB/ksu/bin/busybox
-  [ -e /data/$ADB/ap/bin/busybox ] && MAGISKBB=/data/$ADB/ap/bin/busybox
+[ -e /data/adb/ksu/bin ] && ADB=adb
+if [ -e /data/$ADB/ksu ]; then
+  [ -e /data/adb/ksu/bin/busybox ] && MAGISKBB=/data/$ADB/ksu/bin/busybox
   [ "$MAGISKBB" ] && export PATH="$MAGISKBB:$PATH"
   [ "$MAGISKBB" ] \
-    && debug "MAGISKBB: $MAGISKBB" \
-    || debug "Inside of Magisk without BusyBox"
-elif [ ! -f "$MAGISKBB" ]; then
-  debug "Not inside of Magisk?"
+    
 fi
 
 ## Define modules target dirs
@@ -162,7 +151,7 @@ mkdir -p $TMPDIR/$MODID
 cd $TMPDIR/$MODID
 ## Unpack the ZIP (everything but "kalifs-*")
 unzip -qq "$ZIPFILE" -x "kalifs-*" || print "! Failed to extract"
-#ui_print "* ZIP unpacked"
+ui_print "* ZIP unpacked"
 
 #------------------------------------------------------------------------------
 
@@ -223,7 +212,7 @@ pm uninstall com.offsec.nethunter.store &>/dev/null || true
 [ -e "$ZIPFILE" ] && {
   ZIP=$(unzip -lqq "$ZIPFILE" | awk '$4 ~ /^supersu.zip/ { print $4; exit }')
   [ "$ZIP" ] && {
-    ui_print "* [!] SuperSU.zip is not supported with Magisk"
+    ui_print "* [!] SuperSU.zip is not supported with KernelSU"
   }
 }
 
@@ -254,14 +243,14 @@ pm install -g $TMP/data/app/NetHunterStore.apk &>/dev/null
 ui_print "** Installing NetHunterStorePrivilegedExtension.apk"
 pm install -g $TMP/data/app/NetHunterStorePrivilegedExtension.apk &>/dev/null
 
-#ui_print "* Done installing apps"
+ui_print "* Done installing apps"
 
 #------------------------------------------------------------------------------
 
 ## Install BusyBox
 ui_print "* Setting up BusyBox"
 source $TMP/tools/install-busybox.sh || abort "! install-busybox.sh"   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
-#print "* Done installing BusyBox"
+print "* Done installing BusyBox"
 
 #------------------------------------------------------------------------------
 
