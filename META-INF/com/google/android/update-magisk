@@ -254,16 +254,6 @@ print "* Done installing BusyBox"
 
 #------------------------------------------------------------------------------
 
-## Setup Kali NetHunter wallpaper of correct resolution if there is one available
-if [ -d $TMP/wallpaper ]; then
-  ui_print "* Running Kali NetHunter wallpaper script" # Installing Kali NetHunter wallpaper
-  source $TMP/tools/set-wallpaper.sh || true   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
-else
-  ui_print "- Skipping wallpaper"
-fi
-
-#------------------------------------------------------------------------------
-
 ## Install NetHunter boot animation
 [ -f $TMP/system/media/bootanimation.zip ] && {
   ui_print "* Installing Kali NetHunter boot animation"
