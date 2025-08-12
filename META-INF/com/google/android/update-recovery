@@ -1,0 +1,724 @@
+## [Recovery/TWRP] [nethunter] [This is sourced, not a standalone script]
+## Kali NetHunter installation script for recovery/TWRP
+##
+## Troubleshoot: $ adb shell 'tail -f /tmp/recovery.log'
+
+progress() {
+  echo "set_progress $1" > "$console"
+}
+
+abort() {
+  [ "$1" ] && {
+    print "! Error: $1"
+    print "* Aborting"
+  }
+  restore_env
+  print "* Failed to install Kali NetHunter!"
+  exit 1
+}
+
+cleanup() {
+  [ "$ZIPFILE" ] && {
+   rm /tmp/console
+  }
+  cd $(dirname $TMP)
+  rm -rf $TMP
+}
+
+install() {
+  setperm "$2" "$3" "$TMP$1"
+  if [ "$4" ]; then
+    cp -r "$TMP$1" "$(dirname "$4")/"
+    return
+  fi
+  cp -r "$TMP$1" "$(dirname "$1")/"
+}
+
+# installapp_user "App Name" "appfile.apk" "play.store.package.name"
+#   if the app package is found in the play store app database, then don't install it
+installapp_user() {
+  installto=/data/app/
+  if [ "$2" ]; then
+    for appdir in "/data/app/$2-"*; do
+      [ -d "$appdir" ] || continue
+      print "Found app directory: $appdir"
+      if [ ! -f /data/data/com.android.vending/databases/localappstate.db ]; then
+        print "Could not find Play Store app database!"
+      ## This should also catch paid/alternative versions if they are suffixed
+      elif strings /data/data/com.android.vending/databases/localappstate.db | grep -q "^$2"; then
+        rm -f "/data/app/$1"
+        print "* Found Play Store installed $1"
+        return 0
+      fi
+      rm -f "/data/app/$1"
+      installto=$appdir/base.apk
+      break
+    done
+  fi
+
+  #print "* Installing $1 to $installto"
+  print "** Installing $1"
+  cp -f "$TMP/data/app/$1" "$installto" && return 0
+  print "* Failed to install $1!" && return 1
+}
+
+installapp_system() {
+  check_freespace $TMP/data/app/
+  print "** Installing $1"
+  mkdir -p ${SYSTEM}/${3:-app}/$2/
+  cp -f $TMP/data/app/$1 ${SYSTEM}/${3:-app}/$2/ && return 0
+  print "* Failed to install $1!" && return 1
+}
+
+setperm() {
+  find "$3" -type d -exec chmod "$1" {} \;
+  find "$3" -type f -exec chmod "$2" {} \;
+}
+
+symlink() {
+  rm "$2"
+  ln -s "$1" "$2"
+}
+
+setup_mountpoint() {
+  [ -L $1 ] && $BB mv -f $1 ${1}_link
+  if [ ! -d $1 ]; then
+    $BB rm -f $1
+    $BB mkdir -p $1
+  fi
+}
+
+is_mounted() {
+  $BB mount | $BB grep -q " $1 "
+}
+
+mount_apex() {
+  [ -d /system_root/system/apex ] || return 1
+  local apex dest loop minorx num var
+  setup_mountpoint /apex;
+  minorx=1;
+  [ -e /dev/block/loop1 ] && minorx=$($BB ls -l /dev/block/loop1 | $BB awk '{ print $6 }');
+  num=0;
+  for apex in /system_root/system/apex/*; do
+    dest=/apex/$($BB basename $apex .apex);
+    case $dest in
+      *.current|*.release) dest=$(echo $dest | $BB rev | $BB cut -d. -f2- | $BB rev);;
+    esac;
+    $BB mkdir -p $dest;
+    case $apex in
+      *.apex)
+        $BB unzip -qo $apex apex_payload.img -d /apex;
+        $BB mv -f /apex/apex_payload.img $dest.img;
+        $BB mount -t ext4 -o ro,noatime $dest.img $dest 2>/dev/null;
+        if [ $? != 0 ]; then
+          while [ $num -lt 64 ]; do
+            loop=/dev/block/loop$num;
+            ($BB mknod $loop b 7 $((num * minorx));
+            $BB losetup $loop $dest.img) 2>/dev/null;
+            num=$((num + 1));
+            $BB losetup $loop | $BB grep -q $dest.img && break;
+          done;
+          $BB mount -t ext4 -o ro,loop,noatime $loop $dest;
+          if [ $? != 0 ]; then
+            $BB losetup -d $loop 2>/dev/null;
+          fi;
+        fi;
+      ;;
+      *) $BB mount -o bind $apex $dest;;
+    esac;
+  done;
+
+  [ -e /system_root/init.environ.rc ] && {
+    for var in $($BB grep -o 'export .* /.*' /system_root/init.environ.rc | $BB awk '{ print $2 }'); do
+      eval OLD_${var}=\$$var
+    done
+
+    #$($BB grep -o 'export .* /.*' /system_root/init.environ.rc | $BB sed 's; /;=/;')   # BusyBox is putting everything on a singe line, so not executing correct
+    for var in $($BB grep -o 'export .* /.*' /system_root/init.environ.rc | $BB sed 's_ /_=/_; s/^export //'); do
+      eval $var
+    done
+    unset export
+  }
+}
+
+umount_apex() {
+  [ -d /apex/com.android.runtime ] || return 1
+  local dest loop var;
+
+  [ -e /system_root/init.environ.rc ] && {
+    for var in $($BB grep -o 'export .* /.*' /system_root/init.environ.rc | $BB awk '{ print $2 }'); do
+      if [ "$(eval echo \$OLD_$var)" ]; then
+        eval $var=\$OLD_${var};
+      else
+        eval unset $var;
+      fi;
+      unset OLD_${var};
+    done;
+  }
+
+  for dest in $($BB find /apex -type d -mindepth 1 -maxdepth 1); do
+    if [ -f $dest.img ]; then
+      loop=$($BB mount | $BB grep $dest | $BB cut -d\  -f1);
+    fi;
+    ($BB umount -l $dest;
+    $BB losetup -d $loop) 2>/dev/null;
+  done;
+
+  $BB rm -rf /apex 2>/dev/null;
+}
+
+find_slot() {
+  local slot=$(getprop ro.boot.slot_suffix 2>/dev/null);
+  [ "$slot" ] || slot=$($BB grep -o 'androidboot.slot_suffix=.*$' /proc/cmdline | $BB cut -d\  -f1 | $BB cut -d= -f2);
+  if [ ! "$slot" ]; then
+    slot=$(getprop ro.boot.slot 2>/dev/null);
+    [ "$slot" ] || slot=$($BB grep -o 'androidboot.slot=.*$' /proc/cmdline | $BB cut -d\  -f1 | $BB cut -d= -f2);
+    [ "$slot" ] && slot=_$slot;
+  fi;
+
+  [ "$slot" ] && echo "$slot";
+}
+
+mount_all() {
+  if ! is_mounted /cache; then
+    $BB mount /cache 2>/dev/null
+  fi;
+
+  if ! is_mounted /data; then
+    $BB mount /data
+  fi;
+
+  ($BB mount -o ro -t auto /vendor;
+  $BB mount -o ro -t auto /product;
+  $BB mount -o ro -t auto /persist) 2>/dev/null;
+  setup_mountpoint $ANDROID_ROOT;
+  if ! is_mounted $ANDROID_ROOT; then
+    $BB mount -o ro -t auto $ANDROID_ROOT 2>/dev/null;
+  fi;
+
+  case $ANDROID_ROOT in
+    /system_root) setup_mountpoint /system;;
+    /system)
+      if ! is_mounted /system && ! is_mounted /system_root; then
+        setup_mountpoint /system_root;
+        $BB mount -o ro -t auto /system_root;
+      elif [ -f /system/system/build.prop ]; then
+        setup_mountpoint /system_root;
+        $BB mount --move /system /system_root;
+      fi;
+      if [ $? != 0 ]; then
+        ($BB umount /system;
+        $BB umount -l /system) 2>/dev/null;
+        if [ -d /dev/block/mapper ]; then
+          [ -e /dev/block/mapper/system ] || local slot=$(find_slot);
+          $BB mount -o ro -t auto /dev/block/mapper/vendor$slot /vendor;
+          $BB mount -o ro -t auto /dev/block/mapper/product$slot /product 2>/dev/null;
+          $BB mount -o ro -t auto /dev/block/mapper/system$slot /system_root;
+        else
+          [ -e /dev/block/bootdevice/by-name/system ] || local slot=$(find_slot);
+          ($BB mount -o ro -t auto /dev/block/bootdevice/by-name/vendor$slot /vendor;
+          $BB mount -o ro -t auto /dev/block/bootdevice/by-name/product$slot /product;
+          $BB mount -o ro -t auto /dev/block/bootdevice/by-name/persist$slot /persist) 2>/dev/null;
+          $BB mount -o ro -t auto /dev/block/bootdevice/by-name/system$slot /system_root;
+        fi;
+      fi;
+    ;;
+  esac;
+
+  if is_mounted /system_root; then
+    mount_apex;
+    if [ -f /system_root/build.prop ]; then
+      $BB mount -o bind /system_root /system;
+    else
+      $BB mount -o bind /system_root/system /system;
+    fi;
+  fi;
+}
+
+umount_all() {
+  local mount;
+  (if is_mounted /system; then
+    $BB umount /system;
+    $BB umount -l /system;
+  fi) 2>/dev/null;
+
+  umount_apex
+
+  (if [ -e /system_root ]; then
+    $BB umount /system_root;
+    $BB umount -l /system_root;
+  fi;
+
+  umount /vendor; # BusyBox umount /vendor breaks recovery on some hacky devices
+  umount -l /vendor;
+
+  for mount in /mnt/system /mnt/vendor /product /mnt/product /persist; do
+    $BB umount $mount;
+    $BB umount -l $mount;
+  done;
+
+  if is_mounted /data; then
+    $BB umount /data;
+    $BB umount -l /data;
+  fi;
+
+  if is_mounted /cache; then
+    $BB umount /cache;
+    $BB umount -l /cache;
+  fi) 2>/dev/null;
+}
+
+setup_env() {
+  $BB mount -o bind /dev/urandom /dev/random;
+  if [ -L /etc ]; then
+    setup_mountpoint /etc;
+    $BB cp -af /etc_link/* /etc;
+    $BB sed -i 's; / ; /system_root ;' /etc/fstab;
+  fi;
+
+  umount_all;
+  mount_all;
+  if [ -d /dev/block/mapper ]; then
+    for slot in "" _a _b; do
+      $BB blockdev --setrw /dev/block/mapper/system$slot 2>/dev/null
+    done
+  fi
+  $BB mount -o rw,remount -t auto /system 2>/dev/null || $BB mount -o rw,remount -t auto / 2>/dev/null
+  OLD_LD_PATH=$LD_LIBRARY_PATH;
+  OLD_LD_PRE=$LD_PRELOAD;
+  OLD_LD_CFG=$LD_CONFIG_FILE;
+  unset LD_LIBRARY_PATH LD_PRELOAD LD_CONFIG_FILE;
+}
+
+restore_env() {
+  local dir;
+  [ "$OLD_LD_PATH" ] && export LD_LIBRARY_PATH=$OLD_LD_PATH;
+  [ "$OLD_LD_PRE" ] && export LD_PRELOAD=$OLD_LD_PRE;
+  [ "$OLD_LD_CFG" ] && export LD_CONFIG_FILE=$OLD_LD_CFG;
+  unset OLD_LD_PATH OLD_LD_PRE OLD_LD_CFG;
+  umount_all;
+  [ -L /etc_link ] && $BB rm -rf /etc/*;
+  (for dir in /apex /system /system_root /etc; do
+    if [ -L "${dir}_link" ]; then
+      rmdir $dir;
+      $BB mv -f ${dir}_link $dir;
+    fi;
+  done;
+  $BB umount -l /dev/random) 2>/dev/null;
+
+  print "* Cleaning up"
+  cleanup
+}
+
+## This gets the latest NetHunter BusyBox
+##   Magisk may have BusyBox ($MAGISKBB)
+get_bb() {
+  cd $TMP/tools/
+  BB_latest=$( (ls -v busybox_nh-* 2>/dev/null || ls busybox_nh-*) | tail -n 1)
+  [ -z $BB_latest ] && abort "Failed to find a NetHunter's BusyBox: $TMP/tools/busybox_nh-*"
+  BB=$TMP/tools/$BB_latest # Use NetHunter BusyBox from ./arch/<arch>/tools/
+  chmod 0755 $BB # Make BusyBox executable
+  echo $BB
+  cd - >/dev/null
+}
+
+install_recovery_bb() {
+  ## To identify the latest BusyBox version, we need the command "ls -v" which is not supported by all TWRP versions
+  ##   We will pick the best available BusyBox version and use that to run "ls -v" to pick the latest version for the recovery partition
+  cd $TMP/tools/
+
+  ## Try to pick the latest version of BusyBox, if "ls -v" is not supported by the recovery then make an educated guess for a later version
+  recovery_bb=$( (ls -v busybox_nh-* 2>/dev/null || ls busybox_nh-*) | tail -n 1 )
+  [ -z $recovery_bb ] && abort "Failed to find a recovery BusyBox: $TMP/tools/busybox_nh-*"
+  cp $recovery_bb busybox_tmp
+  setperm 0755 0755 busybox_tmp
+
+  ## Now that we picked a reasonably current BusyBox, use that to copy the absolute latest to the recovery partition using "ls -v"
+  nethunter_bb=$(./busybox_tmp ls -v busybox_nh-* | tail -n 1)
+  print "** Installing $nethunter_bb applets to /sbin"
+  cp $nethunter_bb /sbin/busybox_nh
+  /sbin/busybox_nh --install /sbin
+  cd - >/dev/null
+}
+
+## Apps can be copy, but also unzip/extracted
+check_freespace() {
+  ## If there is a not second argument, show banner
+  [ -n "$2" ] && \
+    print "* Checking free space on $ANDROID_ROOT"
+
+  mntspace=$($BB df -m $ANDROID_ROOT | tail -n 1 | tr -s ' ' | cut -d' ' -f4)
+  checkspace=$($BB du -c -m $1 | tail -n 1 | awk '{print $1}')
+
+  if [ -z $mntspace ]; then
+    print "Warning: Could not get free space status for $ANDROID_ROOT, continuing anyway!"
+  elif [ -z $checkspace ]; then
+    print "Warning: Could not get free space status for $1, continuing anyway!"
+  elif [ "$mntspace" -lt "$checkspace" ]; then
+    ## Disabling, as if you run this twice, the first time will be happy as no apps - afterwards, could be limited on space, but able to replace!
+    ## May also want to check for [ -f tools/make-freespace.sh ], as the end-user may want this disabled
+    #if [ -n "$2" ]; then
+    #  abort "Didn't have enough space on $ANDROID_ROOT ($mntspace MB free, need $checkspace MB)"
+    #else
+      print "Warning: May not have enough space on $ANDROID_ROOT ($mntspace MB free, need $checkspace MB)"
+    #fi
+  elif [ "$mntspace" -eq "0" ]; then
+    abort "Out of space on $ANDROID_ROOT ($mntspace MB free)"
+  fi
+}
+
+install_supersu() {
+  if [ "$supersu" = "systemless" ]; then
+    print "* Installing SuperSU in systemless mode"
+    echo "SYSTEMLESS=true" > "/system/.supersu"
+  elif [ "$supersu" = "system" ]; then
+    print "* Installing SuperSU in system mode"
+    echo "SYSTEMLESS=false" > "/system/.supersu"
+  else
+    print "* Installing SuperSU in automatic mode"
+    echo "SYSTEMLESS=detect" > "/system/.supersu"
+  fi
+
+  sh "$supersu_tmp/META-INF/com/google/android/update-binary" dummy 1 "$TMP/supersu.zip" 2>&1 || print "update-binary/supersu.zip failed" # Spawn a new session (aka using sh), don't do it in the current session
+
+  print "* SuperSU successfully installed"
+}
+
+previous_install() {
+  ARCH_TMP=armhf # HACK: Old installations only exist as armhf anyways
+  NH=/data/local/kali-$ARCH_TMP
+  NHAPP=/data/data/com.offsec.nethunter/files/chroot/kali-$ARCH_TMP
+  NHSYS=/data/local/nhsystem/kali-$ARCH_TMP
+
+  ## Fix for TWRP chasing symbolic links (mentioned by triryland)
+  rm -rf "$NHSYS/dev/"* "$NHAPP/dev/"* "$NH/dev/"*
+
+  ## We probably don't want two old chroots in the same folder, so pick newer location in /data/local first
+  if [ -d "$NH" ]; then
+    print "* Detected outdated previous install of Kali $ARCH_TMP, moving chroot"
+    mv "$NH" "$NHSYS"
+  elif [ -d "$NHAPP" ]; then
+    print "* Detected outdated previous install of Kali $ARCH_TMP, moving chroot"
+    mv "$NHAPP" "$NHSYS"
+  fi
+
+  ## Just to be safe lets remove old version of NetHunter app
+  rm -rf /data/data/com.offsec.nethunter
+  rm -rf /data/app/com.offsec.nethunter
+  rm -f  /data/app/NetHunter.apk
+  rm -f  /data/app/nethunter.apk
+  rm -rf /system/app/NetHunter
+
+  print "* Cleaned up from previous install"
+}
+
+#------------------------------------------------------------------------------
+
+## Start build generated variables
+supersu="auto"
+## End build generated variables
+
+SYSTEM="/system"
+test "$ANDROID_ROOT" || ANDROID_ROOT="$SYSTEM" # Alt: [ "$ANDROID_ROOT" ] || ANDROID_ROOT=$SYSTEM
+bootpatcher_tmp=$TMP/boot-patcher
+export home=$bootpatcher_tmp
+
+#------------------------------------------------------------------------------
+
+[ -d /data/data ] || {
+  abort "Your /data partition appears to be empty. Please complete the Android setup wizard before installing Kali NetHunter!"   # Or reboot?
+}
+
+#------------------------------------------------------------------------------
+
+## Disabling as its done in ./update-binary
+### Unpack the installer (everything but "kalifs-*")
+#[ "$ZIPFILE" ] && {
+#  print "* Unpacking the installer"
+#  extract "$ZIPFILE" "$TMP" "kalifs-*"
+#  #print "* Installer unpacked"
+#}
+cd "$TMP"
+
+print "* Loading environment"
+source "$TMP/env.sh"   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
+
+[ -e /dev/block/mapper ] && {
+  ## Not using abort(), as this is more verbose
+  print ""
+  print "********** Dynamic Device Detected **********"
+  print ""
+  print "This Kali NetHunter package cannot be"
+  print "installed on this device via recovery."
+  print "Please flash this file via Magisk "
+  print "as module and ensure you have USB DEBUGGING"
+  print "enabled for using ADB"
+  print ""
+  print "******* NetHunter Installation failed *******"
+  cleanup
+  exit 1
+}
+
+progress 0.0
+print "* Starting the installation"
+
+#------------------------------------------------------------------------------
+
+print "* Setting permissions"
+setperm 0755 0755 tools
+
+print "* Setting up BusyBox"
+BB=$(get_bb) # Get latest BusyBox
+[ -e $TMP/tools/busybox_tmp ] || install_recovery_bb
+
+print "* Setting environment"
+setup_env # Setup environment for NetHunter installation
+
+progress 0.1
+
+#------------------------------------------------------------------------------
+
+print "* Running legacy Kali NetHunter version script" # Checking for legacy version of NetHunter
+previous_install || abort "Legacy Kali NetHunter failed"
+
+progress 0.2
+
+#------------------------------------------------------------------------------
+
+print "* Finding Android SDK version"
+SDK="$(grep 'ro.build.version.sdk' ${SYSTEM}/build.prop | cut -d'=' -f2)"
+[ -z $SDK ] && {
+  abort "Could not find SDK version"
+}
+print "** SDK Version: $SDK"
+
+[ -f supersu.zip ] && {
+  supersu_tmp=/tmp/supersu
+
+  print "* Extracting SuperSU.zip"
+  extract supersu.zip "$supersu_tmp"
+
+  progress 0.3
+
+  print "* Installing SuperSU"
+  if [ $SDK -ge 29 ]; then
+    print "Warning: Warning: SuperSU is EOL and only really works on Android Pie (9) or lower"
+  fi
+  install_supersu || print "! SuperSU failed"
+}
+
+progress 0.4
+
+#------------------------------------------------------------------------------
+
+## Starting with Android 8 (Oreo) we can no longer install user apps (/data/app/)
+##   So we install as system apps (/system)
+if [ $SDK -ge 26 ]; then
+  ## Apps in /system
+  check_freespace $TMP/data/app/ "True"
+  print "* Installing apps (via system):"
+  installapp_system "NetHunter.apk" "com.offsec.nethunter"
+  installapp_system "NetHunterTerminal.apk" "com.offsec.nhterm"       # NetHunter.apk depends on it
+  installapp_system "NetHunterKeX.apk" "com.offsec.nethunter.kex"     # NetHunter.apk uses it
+  installapp_system "NetHunterStore.apk" "com.offsec.nethunter.store" # We need it
+else
+  ## Apps in /data/app/
+  check_freespace /data/app/ "True"
+  print "Installing apps (via user):"
+  installapp_user "NetHunter.apk" "com.offsec.nethunter"
+  installapp_user "NetHunterTerminal.apk" "com.offsec.nhterm"         # NetHunter.apk depends on it
+  installapp_user "NetHunterKeX.apk" "com.offsec.nethunter.kex"       # NetHunter.apk uses it
+  installapp_user "NetHunterStore.apk" "com.offsec.nethunter.store"   # We need it
+fi
+
+## Installing privileged extension                                    # NetHunterStore.apk depends on it
+installapp_system "NetHunterStorePrivilegedExtension.apk" "com.offsec.nethunter.store.privileged" "priv-app"
+
+if [ $SDK -ge 26 ]; then
+  print "* Extracting apps:"
+
+  [ -f ${SYSTEM}/app/com.offsec.nhterm/NetHunterTerminal.apk ] && {
+    check_freespace ${SYSTEM}/app/com.offsec.nhterm/
+
+    print "** Extracting NetHunterTerminal.apk"
+    unzip -qo ${SYSTEM}/app/com.offsec.nhterm/NetHunterTerminal.apk "lib/*" -d ${SYSTEM}/app/com.offsec.nhterm/ || print "! Failed to extract"
+    ## Some newer TWRP versions ship an unzip that does not support the above line so we might need plan B
+    [ -d ${SYSTEM}/app/com.offsec.nhterm/lib ] || {
+      print "** Extracting NetHunterTerminal.apk #2"
+      mkdir -p /tmp/NetHunter-Terminal/
+      unzip -qo ${SYSTEM}/app/com.offsec.nhterm/NetHunterTerminal.apk -d /tmp/NetHunter-Terminal/ || print "! Failed to extract"
+      mv /tmp/NetHunter-Terminal/lib ${SYSTEM}/app/com.offsec.nhterm/
+    }
+    mv ${SYSTEM}/app/com.offsec.nhterm/lib/armeabi-v7a ${SYSTEM}/app/com.offsec.nhterm/lib/arm
+    mv ${SYSTEM}/app/com.offsec.nhterm/lib/arm64-v8a ${SYSTEM}/app/com.offsec.nhterm/lib/arm64
+  }
+
+  [ -f ${SYSTEM}/app/com.offsec.nethunter.kex/NetHunterKeX.apk ] && {
+    check_freespace ${SYSTEM}/app/com.offsec.nethunter.kex/
+
+    ## For an alt, see install-chroot.sh
+    if [ -n "$ARCH" ]; then
+      case $ARCH in
+        amd64) x=x86_64;;
+        i386)  x=x86;;
+        arm64) x=arm64-v8a;;
+        armhf) x=armeabi-v7a;;
+        *) abort "Unknown arch: $ARCH"
+        ;;
+      esac;
+      print "** Extracting NetHunterKeX.apk ($ARCH / $x)"
+      unzip -qo ${SYSTEM}/app/com.offsec.nethunter.kex/NetHunterKeX.apk "lib/$x/*" -d ${SYSTEM}/app/com.offsec.nethunter.kex/ || print "! Failed to extract"
+    else
+      print "** Extracting NetHunterKeX.apk"
+      unzip -qo ${SYSTEM}/app/com.offsec.nethunter.kex/NetHunterKeX.apk "lib/*" -d ${SYSTEM}/app/com.offsec.nethunter.kex/ || print "! Failed to extract"
+    fi
+    ## Some newer TWRP versions ship an unzip that does not support the above line so we might need plan B
+    [ -d ${SYSTEM}/app/com.offsec.nethunter.kex/lib ] || {
+      print "** Extracting NetHunterKeX.apk #2"
+      mkdir -p /tmp/com.offsec.nethunter.kex/
+      unzip -qo ${SYSTEM}/app/com.offsec.nethunter.kex/NetHunterKeX.apk -d /tmp/com.offsec.nethunter.kex/ || print "! Failed to extract"
+      mv /tmp/com.offsec.nethunter.kex/lib ${SYSTEM}/app/com.offsec.nethunter.kex/
+    }
+    [ -f ${SYSTEM}/app/com.offsec.nethunter.kex/lib/armeabi-v7a ] && mv ${SYSTEM}/app/com.offsec.nethunter.kex/lib/armeabi-v7a ${SYSTEM}/app/com.offsec.nethunter.kex/lib/arm
+    [ -f ${SYSTEM}/app/com.offsec.nethunter.kex/lib/arm64-v8a ] && mv ${SYSTEM}/app/com.offsec.nethunter.kex/lib/arm64-v8a ${SYSTEM}/app/com.offsec.nethunter.kex/lib/arm64
+  }
+
+  check_freespace ${SYSTEM}/etc/permissions
+  print "** Extracting NetHunterStorePrivilegedExtension.apk"
+  mkdir -p ${SYSTEM}/etc/permissions
+  chmod 0755 ${SYSTEM}/etc/permissions
+  [ -f system/etc/permissions/com.offsec.nethunter.store.privileged.xml ] && {
+    install "/system/etc/permissions/com.offsec.nethunter.store.privileged.xml" 0755 0644 "${SYSTEM}/etc/permissions/com.offsec.nethunter.store.privileged.xml"
+  }
+fi
+
+progress 0.5
+
+#------------------------------------------------------------------------------
+
+[ -f tools/make-freespace.sh ] && {
+  print "* Running freespace script"   # Check for freespace different to check_freespace()
+  source "$TMP/tools/make-freespace.sh" || abort "Not enough free space on ${SYSTEM} to continue!"   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
+  #print "* Done checking freespace"
+}
+
+print "* Running BusyBox installer script"
+source "$TMP/tools/install-busybox.sh" || abort "install-busybox.sh failed"   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
+#print "* Done running BusyBox installer"
+
+progress 0.6
+
+#------------------------------------------------------------------------------
+
+[ -d $TMP/wallpaper ] && {
+  print "* Running Kali NetHunter wallpaper script" # Installing Kali NetHunter wallpaper
+  source "$TMP/tools/set-wallpaper.sh" || true   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
+  #print "* Done installing wallpaper"
+}
+
+[ -f $TMP/system/media/bootanimation.zip ] && {
+  print "* Installing Kali NetHunter boot animation"
+  install "/system/media/bootanimation.zip" 0755 0644 "${SYSTEM}/media/bootanimation.zip"
+}
+
+progress 0.7
+
+#------------------------------------------------------------------------------
+
+[ -d $TMP/system/etc/nano ] && {
+  print "* Copying nano highlights to ${SYSTEM}/etc/nano"
+  install "/system/etc/nano" 0755 0644 "${SYSTEM}/etc/nano"
+}
+
+[ -d $TMP/system/etc/terminfo ] && {
+  print "* Copying terminfo files to ${SYSTEM}/etc/terminfo"
+  install "/system/etc/terminfo" 0755 0644 "${SYSTEM}/etc/terminfo"
+}
+
+[ -d $TMP/boot-patcher/system/etc/firmware ] && {
+  print "* Copying Wi-Fi firmwares to ${SYSTEM}/etc/firmware"
+  install "/boot-patcher/system/etc/firmware" 0755 0644 "${SYSTEM}/etc/firmware"
+}
+
+[ -d $TMP/system/lib ] && {
+  print "* Copying 32-bit shared libraries to ${SYSTEM}/lib"
+  install "/system/lib" 0755 0644 "${SYSTEM}/lib"
+}
+
+[ -d $TMP/system/lib64 ] && {
+  print "* Copying 64-bit shared libraries to ${SYSTEM}/lib64"
+  install "/system/lib64" 0755 0644 "${SYSTEM}/lib64"
+}
+
+[ -d $TMP/system/bin ] && {
+  print "* Installing ${SYSTEM}/bin binaries"
+  install "/system/bin" 0755 0755 "${SYSTEM}/bin"
+}
+
+[ -d $TMP/system/xbin ] && {
+  print "* Installing ${SYSTEM}/xbin binaries"
+  [ -d ${SYSTEM}/xbin ] || mkdir -p ${SYSTEM}/xbin
+  install "/system/xbin" 0755 0755 "${SYSTEM}/xbin"
+}
+
+[ -d $TMP/boot-patcher/system/xbin ] && {
+  print "* Installing hid-keyboard to ${SYSTEM}/xbin"
+  [ -d ${SYSTEM}/xbin ] || mkdir -p ${SYSTEM}/xbin
+  install "/boot-patcher/system/xbin" 0755 0755 "${SYSTEM}/xbin"
+}
+
+[ -d data/local ] && {
+  print "* Copying additional files to /data/local"
+  install "/data/local" 0755 0644
+}
+
+[ -d $TMP/system/etc/init.d ] && {
+  print "* Installing init.d scripts"
+  install "/system/etc/init.d" 0755 0755 "${SYSTEM}/etc/init.d"
+
+  print "* Installing userinit.d scripts"
+  ## Create userinit.d and userinit.sh if they don't already exist
+  mkdir -p "/data/local/userinit.d"
+  setperm 0755 0755 "/data/local/userinit.d"
+  [ -f "/data/local/userinit.sh" ] || echo "#!/system/bin/sh" > "/data/local/userinit.sh"
+  chmod 0755 "/data/local/userinit.sh"
+}
+
+[ -e $TMP/system/addon.d/80-nethunter.sh ] && {
+  print "* Installing ${SYSTEM}/addon.d backup scripts"
+  install "/system/80-nethunter.sh" 0755 0755 "${SYSTEM}/80-nethunter.sh"
+}
+
+print "* Symlinking NetHunter.apk boot scripts"
+symlink "/data/data/com.offsec.nethunter/assets/scripts/bootkali" "${SYSTEM}/bin/bootkali"
+symlink "/data/data/com.offsec.nethunter/assets/scripts/bootkali_init" "${SYSTEM}/bin/bootkali_init"
+symlink "/data/data/com.offsec.nethunter/assets/scripts/bootkali_login" "${SYSTEM}/bin/bootkali_login"
+symlink "/data/data/com.offsec.nethunter/assets/scripts/bootkali_bash" "${SYSTEM}/bin/bootkali_bash"
+symlink "/data/data/com.offsec.nethunter/assets/scripts/killkali" "${SYSTEM}/bin/killkali"
+
+progress 0.8
+
+#------------------------------------------------------------------------------
+
+[ -d "$bootpatcher_tmp" ] && {
+  print "* Running boot-patcher script"
+  sh "$bootpatcher_tmp/META-INF/com/google/android/update-binary" 2>&1 || abort "Boot-Patcher script failed"   # Spawn a new session (aka using sh), don't do it in the current session
+  #print "* Done running boot-patcher"
+
+  ## Setup environment again due to boot-patcher (possibly) altering
+  print "* Re-setting environment"
+  setup_env
+}
+
+progress 0.9
+
+#------------------------------------------------------------------------------
+
+print "* Running Kali chroot installer script"
+source "$TMP/tools/install-chroot.sh" || abort "Chroot script failed"   # Don't spawn a new session (aka using sh), do in current session (able to pass variables/functions)
+#print "* Done running Kali chroot installer"
+
+print "* Restoring environment"
+restore_env # Restore environment after installation
+
+progress 1.0
