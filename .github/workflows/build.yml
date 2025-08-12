@@ -1,41 +1,37 @@
 name: Build and Release
-
 on:
   workflow_dispatch:
     inputs:
       tag:
         description: 'Release Tag (e.g. v1.0.0)'
         required: true
-
 jobs:
   build:
     runs-on: ubuntu-22.04
     env:
       BUILD_KERNEL_VERSION: ${{ github.event.inputs.tag }}
+      BUILD_CHROOT: "1"
     permissions:
       contents: write
-
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
       - name: Set Up Build Environment
         run: |
           sudo apt update
-          sudo apt install -y libncurses5-dev libtinfo5
-
+          sudo apt install -y libncurses5-dev libtinfo5 aria2
       - name: Build Kernel
         run: |
-          bash matrix_build.sh
-
+          BUILD_CHROOT=1 ./matrix_build.sh
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v4
         with:
           name: "NH-Kernel-Exy9820-OneUI4.1-${{ env.BUILD_KERNEL_VERSION }}"
-          path: build/*.zip
-
+          path: |
+            build/*.zip
+            build/*.z*
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -43,13 +39,11 @@ jobs:
       BUILD_KERNEL_VERSION: ${{ github.event.inputs.tag }}
     permissions:
       contents: write
-
     steps:
       - name: Download Built Artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
@@ -57,28 +51,32 @@ jobs:
           name: "NH-Kernel-Exy9820-OneUI4.1-${{ env.BUILD_KERNEL_VERSION }}"
           body: |
               ## NetHunter Kernel for Exynos9820 (OneUI 4.1)
-
               **Supported Devices:**  
               - Galaxy S10e (beyond0)  
               - Galaxy S10 (beyond1)  
               - Galaxy S10+ (beyond2)  
               - Galaxy S10 5G (beyondx)
-
               **Kernel Features:**  
               - Pre-rooted with KernelSU-Next
               - Built from commit `${{ github.sha }}`  
               - Early init injects `init.exynos9820.usb.rc` to enable full USB Arsenal capabilities  
               - Custom-built NetHunter app, specially optimized for Exynos9820 (USB Arsenal works only with this version!)  
               - All other NetHunter functions supported (Packet Injection, Monitor mode, WPS etc.)
-
-              **How to install ?**
-              - Flash with Magisk/KSU/APatch manager and **not using a custom recovery.**
-
+              ### 🟢 Installation
+              **Installation Method:** Use **KernelSU-Next** Manager only — no custom recovery.
+              01. **Download Kali Chroot**
+                  - For the full package: Download all `splitted-` files from Releases, unzip only the `.zip` file (it will extract the rest automatically).
+                  - For the minimal package: Download the minimal zip (no unzipping needed).
+                  - Install the extracted full package or the minimal zip via KernelSU-Next Manager.
+              02. **Install the Kernel**
+                  - Download and install `NH-Kernel-Exy9820-OneUI4.1-xxxx.zip` via KernelSU-Next Manager.
+                  - Reboot.
               ---
               Built by: [@ravindu644](https://github.com/ravindu644)  
               Follow the [GitHub project](https://github.com/${{ github.repository }}) for updates.
-
           draft: false
           prerelease: false
           token: ${{ secrets.TOKEN }}
-          artifacts: artifacts/**/*.zip
+          artifacts: |
+            artifacts/**/*.zip
+            artifacts/**/*.z*

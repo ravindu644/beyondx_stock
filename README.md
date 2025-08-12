@@ -132,18 +132,16 @@ The author is **not responsible** for any misuse, damage, or legal consequences 
 
 # 🟢 Installation
 
-01. **First, download NetHunter for KSU from here**  
+**Installation Method:** Use **KernelSU-Next** Manager only — no custom recovery.
 
-    - https://github.com/SherlockChiang/Nethunter_for_KernelSU
-    - [Download the latest rootfs from here](https://kali.download/nethunter-images/current/rootfs/) (full rootfs is recommended)
-    - Unzip the `Nethunter_for_KernelSU` zip, replace its `kali-nethunter-rootfs-xxxx.xz` file with the downloaded latest one.
-    - Zip it again and flash it via KSU Manager → reboot the phone once.
-    - Then, don't do anything, and follow step `02` below.
+01. **Download Kali Chroot**
+    - For the full package: Download all `splitted-` files from Releases, unzip only the `.zip` file (it will extract the rest automatically).
+    - For the minimal package: Download the minimal zip (no unzipping needed).
+    - Install the extracted full package or the minimal zip via KernelSU-Next Manager.
 
-02. Download the `Module.zip` from my [GitHub releases](https://github.com/ravindu644/samsung_exynos9820_stock/releases).  
-03. Install it via KSU Manager, copy the created `BootBackup` to your PC, and reboot the phone.
-
-    - This process will uninstall the original NetHunter APK and replace it with our custom one.
+02. **Install the Kernel**
+    - Download and install `NH-Kernel-Exy9820-OneUI4.1-xxxx.zip` via KernelSU-Next Manager.
+    - Reboot.
 
 ---
 
