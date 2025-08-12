@@ -37,24 +37,51 @@ export ARCH=arm64
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
 
-#main variables
-export ARGS="
--j$(nproc)
-ARCH=arm64
-CLANG_TRIPLE=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/aarch64-linux-gnu-
-CROSS_COMPILE=${RDIR}/toolchain/gcc-cfp/gcc-cfp-jopp-only/aarch64-linux-android-4.9/bin/aarch64-linux-android-
-CC=${RDIR}/toolchain/clang/host/linux-x86/clang-4639204-cfp-jopp/bin/clang
+# init clang-r383902b
+if [ ! -d "${HOME}/toolchains/clang-r383902b" ]; then
+    echo -e "\n[INFO] Cloning clang-r383902b...\n"
+    mkdir -p "${HOME}/toolchains/clang-r383902b" && cd "${HOME}/toolchains/clang-r383902b"
+    curl -LO "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/0e9e7035bf8ad42437c6156e5950eab13655b26c/clang-r383902b.tar.gz"
+    tar -xf clang-r383902b.tar.gz && rm clang-r383902b.tar.gz
+    cd "${RDIR}"
+fi
+
+# init arm gnu toolchain
+if [ ! -d "${HOME}/toolchains/gcc" ]; then
+    echo -e "\n[INFO] Cloning ARM GNU Toolchain\n"
+    mkdir -p "${HOME}/toolchains/gcc" && cd "${HOME}/toolchains/gcc"
+    curl -LO "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz"
+    tar -xf arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu.tar.xz
+    cd "${RDIR}"
+fi
+
+# Export toolchain paths
+export PATH="${HOME}/toolchains/clang-r383902b/bin:${PATH}"
+export LD_LIBRARY_PATH="${HOME}/clang-r383902b/lib:${HOME}/clang-r383902b/lib64:${LD_LIBRARY_PATH}"
+
+# Set cross-compile environment variables
+export BUILD_CROSS_COMPILE="${HOME}/toolchains/gcc/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+export BUILD_CC="${HOME}/toolchains/clang-r383902b/bin/clang"
+
+# Build options for the kernel
+export BUILD_OPTIONS="
+HOSTLDLIBS="-lyaml" \
+-j$(nproc) \
+ARCH=arm64 \
+CROSS_COMPILE=${BUILD_CROSS_COMPILE} \
+CC=${BUILD_CC} \
+CLANG_TRIPLE=aarch64-linux-gnu- \
 "
 
 #building function
 build_ksu(){
-    make ${ARGS} "${KERNEL_DEFCONFIG}" common.config ksu.config version.config nethunter.config
+    make ${BUILD_OPTIONS} "${KERNEL_DEFCONFIG}" common.config ksu.config version.config nethunter.config
 
     if [ ! "$MAKE_MENUCONFIG" = "0" ]; then
-        make ${ARGS} menuconfig || true
+        make ${BUILD_OPTIONS} menuconfig || true
     fi
 
-    make ${ARGS} || exit 1
+    make ${BUILD_OPTIONS} || exit 1
 }
 
 #build boot.img
