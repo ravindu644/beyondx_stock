@@ -27,10 +27,6 @@ declare -A DEVICES=(
     [beyond1]="exynos9820-beyond1_defconfig 9820 SRPRI28B014KU S"
     [beyond0]="exynos9820-beyond0_defconfig 9820 SRPRI28A014KU S"
     [beyondxks]="exynos9820-beyondxks_defconfig 9820 SRPSC04B011KU S"
-    [d1]="exynos9825-d1_defconfig 9825 SRPSD26B009KU N"
-    [d2s]="exynos9825-d2s_defconfig 9825 SRPSC14B009KU N"
-    [d1x]="exynos9825-d1xks_defconfig 9825 SRPSD23A002KU N"
-    [d2x]="exynos9825-d2x_defconfig 9825 SRPSC14C007KU N"    
 )
 
 # Set device-specific variables
@@ -91,18 +87,6 @@ CROSS_COMPILE=${BUILD_CROSS_COMPILE} \
 CC=${BUILD_CC} \
 CLANG_TRIPLE=aarch64-linux-gnu- \
 "
-# tzdev
-rm -rf "${RDIR}/drivers/misc/tzdev"
-
-if [ "$PHONE" = "S" ]; then
-    echo "Using S tzdev driver"
-    cp -ar "${RDIR}/prebuilt-images/S/tzdev" "${RDIR}/drivers/misc/tzdev"
-
-elif [ "$PHONE" = "N" ]; then
-    echo "Using N tzdev driver"
-    cp -ar "${RDIR}/prebuilt-images/N/tzdev" "${RDIR}/drivers/misc/tzdev"
-
-fi
 
 #building function
 build_ksu(){
