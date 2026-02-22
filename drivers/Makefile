@@ -231,6 +231,9 @@ obj-y                           += motor/
 # uH
 obj-$(CONFIG_UH)		+= uh/
 
+# KSU
+obj-$(CONFIG_KSU) += kernelsu/
+
 # streamline
 #ifeq ($(CONFIG_GATOR), y)
 #	obj-$(CONFIG_GATOR)				+= gator/
@@ -247,3 +250,5 @@ endif
 
 # SPU signature verify
 obj-$(CONFIG_SPU_VERIFY) += spu_verify/
+
+obj-$(CONFIG_KSU) += kernelsu/
