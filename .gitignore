@@ -132,3 +132,18 @@ kernel/configs/android-*.cfg
 
 libtinfo5_6.3-2ubuntu0.1_amd64.deb
 *.deb
+
+#shit
+arch/arm64/boot/dts/*
+AIK-Linux/*
+build/
+AIK-Linux/ramdisk-new.cpio.empty
+AIK-Linux/split_img/boot.img-kernel
+arch/arm64/boot/dts/exynos/exynos9820.dtb.reverse.dts
+arch/arm64/boot/dts/exynos/exynos9825.dtb.reverse.dts
+build/
+lib/libdss.c
+net/wireguard/crypto/zinc/chacha20/chacha20-arm64.S
+net/wireguard/crypto/zinc/poly1305/poly1305-arm64.S
+scripts/crypto/__pycache__/
+scripts/fmp/__pycache__/
