@@ -43,7 +43,7 @@ if [ -z "$BUILD_KERNEL_VERSION" ]; then
 fi
 
 #setting up localversion
-echo -e "CONFIG_LOCALVERSION_AUTO=n\nCONFIG_LOCALVERSION=\"-ravindu644-${BUILD_KERNEL_VERSION}\"\n" > "${RDIR}/arch/arm64/configs/version.config"
+echo -e "CONFIG_LOCALVERSION_AUTO=n\nCONFIG_LOCALVERSION=\"-droidspaces@ravindu644-${BUILD_KERNEL_VERSION}\"\n" > "${RDIR}/arch/arm64/configs/version.config"
 
 #OEM variabls
 export ARCH=arm64
@@ -100,7 +100,7 @@ fi
 
 #building function
 build_kernel(){
-    make ${BUILD_OPTIONS} "${KERNEL_DEFCONFIG}" common.config version.config
+    make ${BUILD_OPTIONS} "${KERNEL_DEFCONFIG}" common.config droidspaces.config version.config
 
     if [ ! "$MAKE_MENUCONFIG" = "0" ]; then
         make ${BUILD_OPTIONS} menuconfig || true
@@ -121,7 +121,7 @@ build_boot() {
 #build odin flashable tar
 build_tar(){
     cp "${RDIR}/prebuilt-images/dt_exynos${SOC}.img.lz4" "${RDIR}/build/dt.img.lz4" && cd ${RDIR}/build
-    tar -cvf "Kernel-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
+    tar -cvf "Droidspaces-RKSU-${MODEL}-${BUILD_KERNEL_VERSION}-stock-One-UI.tar" boot.img dt.img.lz4 && rm boot.img dt.img.lz4
     echo -e "\n[i] Build Finished..!\n" && cd ${RDIR}
 }
 
