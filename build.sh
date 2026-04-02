@@ -4,6 +4,9 @@ export KBUILD_BUILD_USER="@ravindu644"
 export MODEL=$1
 export MAKE_MENUCONFIG=1
 
+# init submodules
+git submodule update --init
+
 #build directory
 rm -rf ${RDIR}/build && mkdir -p ${RDIR}/build
 
