@@ -62,6 +62,6 @@ jobs:
           name: "KernelSU-Next-beyond-stock-One-UI-${{ github.event.inputs.tag }}"
           draft: false
           prerelease: false
-          token: ${{ secrets.TOKEN }}          
+          token: ${{ secrets.GITHUB_TOKEN }}          
           artifacts: "artifacts/**/*.tar"
           body: "Commit SHA: ${{ github.sha }}"
